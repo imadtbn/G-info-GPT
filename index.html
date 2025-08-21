@@ -1,0 +1,632 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>نظام إدارة حضيرة الإعلام الآلي</title>
+  <style>
+    :root{
+      --bg:#0f172a;       /* slate-900 */
+      --panel:#111827;    /* gray-900 */
+      --ink:#e5e7eb;      /* gray-200 */
+      --muted:#9ca3af;    /* gray-400 */
+      --accent:#22c55e;   /* green-500 */
+      --danger:#ef4444;   /* red-500 */
+      --warn:#f59e0b;     /* amber-500 */
+      --info:#3b82f6;     /* blue-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Naskh Arabic UI","Tajawal",Arial,sans-serif}
+    a{color:inherit}
+    .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+    .sidebar{background:var(--panel);border-left:1px solid #222;display:flex;flex-direction:column}
+    .brand{padding:20px;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:10px}
+    .brand .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#34d399)}
+    .brand h1{margin:0;font-size:18px}
+    .nav{padding:10px;overflow:auto}
+    .nav button{width:100%;text-align:right;background:transparent;border:0;color:var(--ink);padding:10px 12px;border-radius:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+    .nav button:hover{background:#1f2937}
+    .nav button.active{background:#064e3b}.content{padding:20px}
+.topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.chip{background:#1f2937;border:1px solid #2a3340;padding:6px 10px;border-radius:999px;color:var(--muted)}
+
+.card{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:12px}
+.grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1100px){.grid.cols-4{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:1fr}}
+@media(max-width:800px){.grid.cols-3{grid-template-columns:repeat(2,1fr)}.grid.cols-2{grid-template-columns:1fr}}
+
+label{font-size:13px;color:var(--muted)}
+input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #334155;background:#0b1220;color:var(--ink)}
+textarea{min-height:70px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:10px 14px;cursor:pointer}
+.btn.primary{background:var(--accent);color:#052e16}
+.btn.warn{background:var(--warn);color:#171003}
+.btn.danger{background:var(--danger);color:#3b0a0a}
+.btn.ghost{background:#1f2937;color:var(--ink);border:1px solid #2a3340}
+
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #1f2937;text-align:right}
+th{color:#cbd5e1;font-weight:600;background:#0b1220;position:sticky;top:0}
+tr:hover td{background:#0b1220}
+.badge{padding:4px 8px;border-radius:999px;font-size:12px;display:inline-block;border:1px solid #2a3340;background:#0b1220}
+.badge.ok{border-color:#14532d;color:#86efac}
+.badge.bad{border-color:#7f1d1d;color:#fecaca}
+.badge.fix{border-color:#78350f;color:#fde68a}
+.badge.propose{border-color:#1e293b;color:#93c5fd}
+
+.kpi{display:flex;align-items:center;gap:12px}
+.kpi .num{font-size:28px;font-weight:700}
+.footer{color:var(--muted);font-size:12px;margin-top:10px}
+.hide{display:none !important}
+.search{display:flex;gap:10px}
+.pill{padding:6px 10px;border:1px solid #2a3340;border-radius:999px;background:#0b1220}
+
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>حضيرة الإعلام الآلي</h1>
+        <div class="chip">نسخة محلية — لا إنترنت</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="footer" style="padding:12px">الحفظ تلقائيًا في المتصفح (localStorage). يُنصح بعمل نسخ احتياطي دوري.</div>
+  </aside>
+  <main class="content">
+    <div class="topbar">
+      <span class="pill">📅 <span id="today"></span></span>
+      <span class="pill">🗂️ إجمالي المكونات: <b id="k_total">0</b></span>
+      <span class="pill">✅ شغّال: <b id="k_ok">0</b></span>
+      <span class="pill">⚠️ معطّل: <b id="k_bad">0</b></span>
+      <span class="pill">🛠️ قيد التصليح: <b id="k_fix">0</b></span>
+      <span class="pill">🧾 مقترح للصرف: <b id="k_prop">0</b></span>
+    </div><!-- لوحات المحتوى -->
+<section id="page_dashboard" class="page"></section>
+<section id="page_inventory" class="page hide"></section>
+<section id="page_users" class="page hide"></section>
+<section id="page_network" class="page hide"></section>
+<section id="page_printers" class="page hide"></section>
+<section id="page_maintenance" class="page hide"></section>
+<section id="page_documents" class="page hide"></section>
+<section id="page_reports" class="page hide"></section>
+<section id="page_backup" class="page hide"></section>
+
+  </main>
+</div><script>
+/*********************************
+ * قاعدة البيانات (محلية)
+ *********************************/
+const DB_KEY = 'it_yard_db_v1';
+/** هيكلة البيانات */
+const db = {
+  meta: { createdAt: new Date().toISOString(), version: 1 },
+  items: [],       // العتاد: حاسوب، شاشة، لوحة مفاتيح، فارة، طابعة، شبكة، طاولة، كرسي ...
+  users: [],       // المستخدمون
+  moves: [],       // حركة التوزيع/التبديل/الحذف (سجل)
+  maintenance: [], // سجلات الصيانة
+  docs: {          // الوثائق: C12 توزيع/استرجاع + وثائق التصليح
+    c12_in: [],    // {id,date,itemId,condition,note}
+    c12_out: [],   // {id,date,itemId,condition,note}
+    repair: []     // {id,date,itemId,desc,vendor,cost,status}
+  }
+};
+
+function save(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); renderKPIs(); }
+function load(){
+  const raw = localStorage.getItem(DB_KEY);
+  if(raw){
+    try{ const parsed = JSON.parse(raw); Object.assign(db, parsed); }
+    catch(e){ console.warn('DB parse error', e) }
+  }
+}
+function uid(prefix='id'){
+  return prefix+'_'+Math.random().toString(36).slice(2,9)+'_'+Date.now().toString(36).slice(-4);
+}
+function todayISO(){ return new Date().toISOString().slice(0,10) }
+
+/*********************************
+ * أدوات مساعدة
+ *********************************/
+const CATEGORIES = [
+  {id:'computer', name:'حاسوب'},
+  {id:'monitor', name:'شاشة'},
+  {id:'keyboard', name:'لوحة مفاتيح'},
+  {id:'mouse', name:'فأرة'},
+  {id:'printer', name:'طابعة'},
+  {id:'network', name:'جهاز شبكات/سويتش/روتر'},
+  {id:'table', name:'طاولة'},
+  {id:'chair', name:'كرسي'}
+];
+const STATUS = [
+  {id:'ok', name:'شغّال'},
+  {id:'bad', name:'معطّل'},
+  {id:'fix', name:'قيد التصليح'},
+  {id:'propose', name:'مقترح للصرف'},
+  {id:'disposed', name:'مصروف'}
+];
+
+function categoryName(id){ return CATEGORIES.find(c=>c.id===id)?.name||id }
+function statusBadge(id){
+  const map={ok:'ok',bad:'bad',fix:'fix',propose:'propose',disposed:'bad'};
+  const name=STATUS.find(s=>s.id===id)?.name||id;return `<span class="badge ${map[id]||''}">${name}</span>`
+}
+function validateIP(v){ return /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$/.test(v) }
+function validateMAC(v){ return /^([0-9A-Fa-f]{2}[:\-]){5}([0-9A-Fa-f]{2})$/.test(v) }
+
+function download(filename, text){
+  const blob = new Blob([text], {type:'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+}
+
+function exportCSV(rows, filename='export.csv'){
+  const escape = s => '"'+String(s).replace(/"/g,'""')+'"';
+  const csv = rows.map(r=>r.map(escape).join(',')).join('\n');
+  download(filename, '\uFEFF'+csv); // BOM لفتحها في Excel عربي
+}
+
+/*********************************
+ * واجهة — تنقل الصفحات
+ *********************************/
+const PAGES = [
+  {id:'dashboard', title:'اللوحة الرئيسية', icon:'🏠'},
+  {id:'inventory', title:'المخزون/العتاد', icon:'💻'},
+  {id:'users', title:'حسابات ومستخدمون', icon:'👤'},
+  {id:'network', title:'الشبكة وعناوين IP/MAC', icon:'🌐'},
+  {id:'printers', title:'الطابعات والحبر', icon:'🖨️'},
+  {id:'maintenance', title:'الأعطال والصيانة', icon:'🛠️'},
+  {id:'documents', title:'الوثائق C12 والتسليم/الاسترجاع والتصليح', icon:'📄'},
+  {id:'reports', title:'التقارير الشهرية', icon:'📊'},
+  {id:'backup', title:'النسخ الاحتياطي والاستيراد', icon:'📦'}
+];
+
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML = PAGES.map(p=>`<button data-goto="${p.id}" onclick="goto('${p.id}')" id="nav_${p.id}">${p.icon} ${p.title} <span></span></button>`).join('');
+}
+function goto(id){
+  document.querySelectorAll('.page').forEach(e=>e.classList.add('hide'));
+  document.querySelector('#page_'+id).classList.remove('hide');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav_'+id).classList.add('active');
+  // رندرة الصفحة عند الدخول
+  const fn = {
+    dashboard: renderDashboard,
+    inventory: renderInventory,
+    users: renderUsers,
+    network: renderNetwork,
+    printers: renderPrinters,
+    maintenance: renderMaintenance,
+    documents: renderDocuments,
+    reports: renderReports,
+    backup: renderBackup
+  }[id];
+  if(fn) fn();
+}
+
+/*********************************
+ * صفحة: اللوحة الرئيسية
+ *********************************/
+function renderKPIs(){
+  const total = db.items.length;
+  const ok = db.items.filter(i=>i.status==='ok').length;
+  const bad = db.items.filter(i=>i.status==='bad').length;
+  const fix = db.items.filter(i=>i.status==='fix').length;
+  const prop = db.items.filter(i=>i.status==='propose').length;
+  document.getElementById('k_total').textContent=total;
+  document.getElementById('k_ok').textContent=ok;
+  document.getElementById('k_bad').textContent=bad;
+  document.getElementById('k_fix').textContent=fix;
+  document.getElementById('k_prop').textContent=prop;
+}
+
+function renderDashboard(){
+  const el = document.getElementById('page_dashboard');
+  const lastMoves = db.moves.slice(-8).reverse();
+  el.innerHTML = `
+    <div class="grid cols-3">
+      <div class="card kpi"><div class="num">${db.items.length}</div><div>إجمالي العتاد</div></div>
+      <div class="card kpi"><div class="num">${db.users.length}</div><div>المستخدمون النشِطون</div></div>
+      <div class="card kpi"><div class="num">${db.maintenance.filter(m=>m.status!=='مغلق').length}</div><div>تذاكر مفتوحة</div></div>
+    </div>
+    <div class="card">
+      <h3>آخر الحركات</h3>
+      <table><thead><tr><th>التاريخ</th><th>العملية</th><th>العنصر</th><th>المستخدم</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        ${lastMoves.map(m=>`<tr>
+          <td class="numbers-latin">${m.date}</td>
+          <td>${m.action}</td>
+          <td>${itemName(m.itemId)}</td>
+          <td>${userName(m.userId)||'-'}</td>
+          <td>${m.note||''}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>
+  `;
+}
+
+/*********************************
+ * صفحة: المخزون/العتاد
+ *********************************/
+function itemName(id){ return db.items.find(i=>i.id===id)?.name||'-' }
+function userName(id){ return db.users.find(u=>u.id===id)?.fullName||'' }
+
+function renderInventory(){
+  const el = document.getElementById('page_inventory');
+  const filter = window.inventoryFilter||{q:'',cat:'',stat:''};
+  el.innerHTML = `
+    <div class="card">
+      <div class="row search">
+        <input id="inv_q" placeholder="بحث بالاسم/الرقم التسلسلي/الموديل..." value="${filter.q||''}" oninput="inventoryFilter.q=this.value; renderInventory();">
+        <select id="inv_cat" onchange="inventoryFilter.cat=this.value; renderInventory();">
+          <option value="">كل الفئات</option>
+          ${CATEGORIES.map(c=>`<option value="${c.id}" ${filter.cat===c.id?'selected':''}>${c.name}</option>`).join('')}
+        </select>
+        <select id="inv_stat" onchange="inventoryFilter.stat=this.value; renderInventory();">
+          <option value="">كل الحالات</option>
+          ${STATUS.map(s=>`<option value="${s.id}" ${filter.stat===s.id?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+        <button class="btn ghost" onclick="exportInventoryCSV()">⬇️ تصدير CSV (Excel)</button>
+        <button class="btn primary" onclick="openItemForm()">➕ إضافة مكوّن</button>
+      </div>
+    </div>
+
+    <div class="card" id="inv_form_wrap" style="display:none"></div>
+
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th>#</th><th>الفئة</th><th>الاسم</th><th>العلامة/الموديل</th><th>الرقم التسلسلي</th>
+          <th>المستخدم</th><th>الشبكة (IP / MAC)</th><th>الحالة</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody id="inv_tbody"></tbody>
+      </table>
+    </div>
+  `;
+  const q=(filter.q||'').toLowerCase();
+  const rows = db.items.filter(i=>
+    (!filter.cat||i.category===filter.cat) &&
+    (!filter.stat||i.status===filter.stat) &&
+    (!q || [i.name,i.brand,i.model,i.serial].some(v=>String(v||'').toLowerCase().includes(q)))
+  );
+  const tbody=document.getElementById('inv_tbody');
+  tbody.innerHTML = rows.map((i,idx)=>`<tr>
+    <td class="numbers-latin">${idx+1}</td>
+    <td>${categoryName(i.category)}</td>
+    <td>${i.name||''}</td>
+    <td>${i.brand||''} / ${i.model||''}</td>
+    <td class="numbers-latin">${i.serial||''}</td>
+    <td>${userName(i.assignedTo)||'-'}</td>
+    <td class="numbers-latin">${(i.net?.ip||'-')} / ${(i.net?.mac||'-')}</td>
+    <td>${statusBadge(i.status)}</td>
+    <td>
+      <button class="btn ghost" onclick="openItemForm('${i.id}')">تعديل</button>
+      <button class="btn warn" onclick="assignItem('${i.id}')">توزيع/تبديل</button>
+      <button class="btn danger" onclick="deleteItem('${i.id}')">حذف</button>
+    </td>
+  </tr>`).join('');
+}
+
+function openItemForm(id){
+  const wrap=document.getElementById('inv_form_wrap');
+  const item = id? db.items.find(i=>i.id===id): {id:uid('it'),category:'computer',name:'',brand:'',model:'',serial:'',status:'ok',assignedTo:'',net:{ip:'',mac:''},printer:{toner:'',ink:''},note:''};
+  wrap.style.display='block';
+  wrap.innerHTML = `
+    <h3>${id?'تعديل مكوّن':'إضافة مكوّن جديد'}</h3>
+    <div class="grid cols-4">
+      <div><label>الفئة</label><select id="f_cat">${CATEGORIES.map(c=>`<option value="${c.id}" ${c.id===item.category?'selected':''}>${c.name}</option>`).join('')}</select></div>
+      <div><label>التسمية</label><input id="f_name" value="${item.name||''}" placeholder="مثال: حاسوب مكتب رئيسي"/></div>
+      <div><label>العلامة</label><input id="f_brand" value="${item.brand||''}" placeholder="Canon, HP, Dell..."/></div>
+      <div><label>الموديل</label><input id="f_model" value="${item.model||''}" placeholder="LBP232 مثلا"/></div>
+      <div><label>الرقم التسلسلي</label><input id="f_serial" value="${item.serial||''}"/></div>
+      <div><label>الحالة</label><select id="f_status">${STATUS.map(s=>`<option value="${s.id}" ${s.id===item.status?'selected':''}>${s.name}</option>`).join('')}</select></div>
+      <div><label>العنوان IP</label><input id="f_ip" value="${item.net?.ip||''}" placeholder="192.168.1.10"/></div>
+      <div><label>العنوان MAC</label><input id="f_mac" value="${item.net?.mac||''}" placeholder="AA:BB:CC:DD:EE:FF"/></div>
+      <div><label>المستخدم</label>
+        <select id="f_user"><option value="">— غير مخصص —</option>${db.users.map(u=>`<option value="${u.id}" ${u.id===item.assignedTo?'selected':''}>${u.fullName}</option>`).join('')}</select>
+      </div>
+      <div><label>حالة الحبر/الطونير (للطابعات)</label><input id="f_toner" value="${item.printer?.toner||''}" placeholder="مثال: 40%"/></div>
+      <div class="cols-2" style="grid-column:span 2"><label>ملاحظات</label><textarea id="f_note">${item.note||''}</textarea></div></div>
+<div class="row" style="margin-top:10px">
+  <button class="btn primary" onclick="saveItem('${id||''}')">💾 حفظ</button>
+  <button class="btn ghost" onclick="document.getElementById('inv_form_wrap').style.display='none'">إغلاق</button>
+</div>
+
+`; }
+
+function saveItem(id){ const item = id? db.items.find(i=>i.id===id): {id:uid('it')}; Object.assign(item, { category: document.getElementById('f_cat').value, name: document.getElementById('f_name').value.trim(), brand: document.getElementById('f_brand').value.trim(), model: document.getElementById('f_model').value.trim(), serial: document.getElementById('f_serial').value.trim(), status: document.getElementById('f_status').value, assignedTo: document.getElementById('f_user').value, net: { ip: document.getElementById('f_ip').value.trim(), mac: document.getElementById('f_mac').value.trim() }, printer: { toner: document.getElementById('f_toner').value.trim() }, note: document.getElementById('f_note').value.trim() }); // تحقق بسيط للشبكة if(item.net.ip && !validateIP(item.net.ip)) return alert('صيغة IP غير صحيحة'); if(item.net.mac && !validateMAC(item.net.mac)) return alert('صيغة MAC غير صحيحة'); if(!id) db.items.push(item); save(); renderInventory(); }
+
+function deleteItem(id){ if(!confirm('تأكيد حذف المكوّن؟')) return; const i = db.items.findIndex(x=>x.id===id); if(i>-1) db.items.splice(i,1); save(); renderInventory(); }
+
+function assignItem(itemId){ const item = db.items.find(i=>i.id===itemId); const userId = prompt('أدخل معرف المستخدم (اختر من صفحة المستخدمين)\nأو اتركه فارغًا لإلغاء التخصيص:', item.assignedTo||'')||''; const note = prompt('ملاحظة (اختياري):','')||''; const move = { id:uid('mv'), date: todayISO(), action: userId? 'توزيع/تبديل' : 'إلغاء تخصيص', itemId, userId, note }; db.moves.push(move); item.assignedTo = userId; save(); renderInventory(); }
+
+function exportInventoryCSV(){ const rows = [ ['الفئة','التسمية','العلامة','الموديل','الرقم التسلسلي','الحالة','المستخدم','IP','MAC','ملاحظات'] ]; db.items.forEach(i=>rows.push([ categoryName(i.category), i.name||'', i.brand||'', i.model||'', i.serial||'', STATUS.find(s=>s.id===i.status)?.name||i.status, userName(i.assignedTo)||'', i.net?.ip||'', i.net?.mac||'', i.note||'' ])); exportCSV(rows, 'inventory.csv'); }
+
+/*********************************
+
+صفحة: المستخدمون *********************************/ function renderUsers(){ const el = document.getElementById('page_users'); el.innerHTML = `
+
+ <div class="card">
+   <div class="row">
+     <input id="u_q" placeholder="بحث بالاسم/الوظيفة/المصلحة" oninput="renderUsers()"/>
+     <button class="btn primary" onclick="openUserForm()">➕ إضافة مستخدم</button>
+     <button class="btn ghost" onclick="exportUsersCSV()">⬇️ تصدير CSV</button>
+   </div>
+ </div>
+ <div class="card" id="user_form" style="display:none"></div>
+ <div class="card">
+   <table><thead><tr><th>#</th><th>الاسم الكامل</th><th>الوظيفة</th><th>المصلحة</th><th>الهاتف</th><th>البريد</th><th>أجهزته</th><th>إجراءات</th></tr></thead>
+   <tbody>
+     ${db.users.filter(u=>{
+       const q=(document.getElementById('u_q')?.value||'').toLowerCase();
+       return !q || [u.fullName,u.role,u.dept,u.phone,u.email].some(v=>String(v||'').toLowerCase().includes(q));
+     }).map((u,idx)=>`<tr>
+       <td class="numbers-latin">${idx+1}</td>
+       <td>${u.fullName}</td>
+       <td>${u.role||''}</td>
+       <td>${u.dept||''}</td>
+       <td class="numbers-latin">${u.phone||''}</td>
+       <td>${u.email||''}</td>
+       <td>${db.items.filter(i=>i.assignedTo===u.id).map(i=>i.name).join('، ')||'-'}</td>
+       <td>
+         <button class="btn ghost" onclick="openUserForm('${u.id}')">تعديل</button>
+         <button class="btn danger" onclick="deleteUser('${u.id}')">حذف</button>
+       </td>
+     </tr>`).join('')}
+   </tbody></table>
+ </div>
+`; }
+
+function openUserForm(id){ const wrap=document.getElementById('user_form'); const u = id? db.users.find(x=>x.id===id) : {id:uid('u'),fullName:'',role:'',dept:'',phone:'',email:''}; wrap.style.display='block'; wrap.innerHTML = <h3>${id?'تعديل مستخدم':'إضافة مستخدم'}</h3> <div class="grid cols-3"> <div><label>الاسم الكامل</label><input id="u_name" value="${u.fullName}"/></div> <div><label>الوظيفة</label><input id="u_role" value="${u.role||''}"/></div> <div><label>المصلحة</label><input id="u_dept" value="${u.dept||''}"/></div> <div><label>الهاتف</label><input id="u_phone" value="${u.phone||''}"/></div> <div><label>البريد الإلكتروني</label><input id="u_email" value="${u.email||''}"/></div> </div> <div class="row" style="margin-top:10px"> <button class="btn primary" onclick="saveUser('${id||''}')">💾 حفظ</button> <button class="btn ghost" onclick="document.getElementById('user_form').style.display='none'">إغلاق</button> </div>; }
+
+function saveUser(id){ const u = id? db.users.find(x=>x.id===id): {id:uid('u')}; Object.assign(u, { fullName: document.getElementById('u_name').value.trim(), role: document.getElementById('u_role').value.trim(), dept: document.getElementById('u_dept').value.trim(), phone: document.getElementById('u_phone').value.trim(), email: document.getElementById('u_email').value.trim(), }); if(!id) db.users.push(u); save(); renderUsers(); }
+
+function deleteUser(id){ if(!confirm('حذف المستخدم سيزيل ارتباطه بالأجهزة، متابعة؟')) return; db.items.forEach(i=>{ if(i.assignedTo===id) i.assignedTo=''; }); const i = db.users.findIndex(u=>u.id===id); if(i>-1) db.users.splice(i,1); save(); renderUsers(); }
+
+function exportUsersCSV(){ const rows = [['الاسم الكامل','الوظيفة','المصلحة','الهاتف','البريد','الأجهزة']]; db.users.forEach(u=>rows.push([u.fullName,u.role||'',u.dept||'',u.phone||'',u.email||'', db.items.filter(i=>i.assignedTo===u.id).map(i=>i.name).join(' | ')])); exportCSV(rows,'users.csv'); }
+
+/*********************************
+
+صفحة: الشبكة *********************************/ function renderNetwork(){ const el = document.getElementById('page_network'); const items = db.items.filter(i=>i.net && (i.net.ip||i.net.mac)); el.innerHTML = `
+
+ <div class="card">
+   <div class="row">
+     <input id="n_q" placeholder="بحث بالاسم/الـ IP/MAC" oninput="renderNetwork()"/>
+     <button class="btn ghost" onclick="exportNetworkCSV()">⬇️ تصدير CSV</button>
+   </div>
+ </div>
+ <div class="card">
+   <table><thead><tr><th>#</th><th>العنصر</th><th>الفئة</th><th>IP</th><th>MAC</th><th>المستخدم</th><th>ملاحظات</th></tr></thead>
+   <tbody>
+     ${items.filter(i=>{
+       const q=(document.getElementById('n_q')?.value||'').toLowerCase();
+       return !q || [i.name,i.net?.ip,i.net?.mac].some(v=>String(v||'').toLowerCase().includes(q));
+     }).map((i,idx)=>`<tr>
+       <td class="numbers-latin">${idx+1}</td>
+       <td>${i.name}</td>
+       <td>${categoryName(i.category)}</td>
+       <td class="numbers-latin">${i.net?.ip||''}</td>
+       <td class="numbers-latin">${i.net?.mac||''}</td>
+       <td>${userName(i.assignedTo)||'-'}</td>
+       <td>${i.note||''}</td>
+     </tr>`).join('')}
+   </tbody></table>
+ </div>
+`; } function exportNetworkCSV(){ const rows = [['العنصر','الفئة','IP','MAC','المستخدم','ملاحظات']]; db.items.filter(i=>i.net&&(i.net.ip||i.net.mac)).forEach(i=>rows.push([i.name,categoryName(i.category),i.net?.ip||'',i.net?.mac||'',userName(i.assignedTo)||'',i.note||''])); exportCSV(rows,'network.csv'); }
+
+/*********************************
+
+صفحة: الطابعات *********************************/ function renderPrinters(){ const el = document.getElementById('page_printers'); const printers = db.items.filter(i=>i.category==='printer'); el.innerHTML = `
+
+ <div class="card">
+   <div class="row">
+     <button class="btn ghost" onclick="exportPrintersCSV()">⬇️ تصدير CSV</button>
+   </div>
+ </div>
+ <div class="card">
+   <table><thead><tr><th>#</th><th>الاسم</th><th>العلامة/الموديل</th><th>الرقم التسلسلي</th><th>الحبر/الطونير</th><th>IP</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+   <tbody>
+     ${printers.map((p,idx)=>`<tr>
+       <td class="numbers-latin">${idx+1}</td>
+       <td>${p.name}</td>
+       <td>${p.brand||''} / ${p.model||''}</td>
+       <td class="numbers-latin">${p.serial||''}</td>
+       <td>${p.printer?.toner||''}</td>
+       <td class="numbers-latin">${p.net?.ip||''}</td>
+       <td>${statusBadge(p.status)}</td>
+       <td><button class="btn ghost" onclick="openItemForm('${p.id}')">تحديث</button></td>
+     </tr>`).join('')}
+   </tbody></table>
+ </div>
+`; } function exportPrintersCSV(){ const rows = [['الاسم','العلامة','الموديل','الرقم التسلسلي','الحبر/الطونير','IP','الحالة']]; db.items.filter(i=>i.category==='printer').forEach(p=>rows.push([p.name,p.brand||'',p.model||'',p.serial||'',p.printer?.toner||'',p.net?.ip||'',STATUS.find(s=>s.id===p.status)?.name||p.status])); exportCSV(rows,'printers.csv'); }
+
+/*********************************
+
+صفحة: الصيانة والأعطال *********************************/ function renderMaintenance(){ const el = document.getElementById('page_maintenance'); el.innerHTML = `
+
+ <div class="card">
+   <div class="row">
+     <button class="btn primary" onclick="openTicketForm()">➕ فتح تذكرة صيانة</button>
+     <button class="btn ghost" onclick="exportMaintenanceCSV()">⬇️ تصدير CSV</button>
+   </div>
+ </div>
+ <div class="card" id="m_form" style="display:none"></div>
+ <div class="card">
+   <table><thead><tr><th>#</th><th>التاريخ</th><th>العنصر</th><th>الوصف</th><th>المورّد/مركز الصيانة</th><th>التكلفة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+   <tbody>
+     ${db.maintenance.map((t,idx)=>`<tr>
+       <td class="numbers-latin">${idx+1}</td>
+       <td class="numbers-latin">${t.date}</td>
+       <td>${itemName(t.itemId)}</td>
+       <td>${t.desc||''}</td>
+       <td>${t.vendor||''}</td>
+       <td class="numbers-latin">${t.cost||''}</td>
+       <td>${t.status}</td>
+       <td>
+         <button class="btn ghost" onclick="openTicketForm('${t.id}')">تعديل</button>
+         <button class="btn danger" onclick="deleteTicket('${t.id}')">حذف</button>
+       </td>
+     </tr>`).join('')}
+   </tbody></table>
+ </div>
+`; }
+
+function openTicketForm(id){ const wrap=document.getElementById('m_form'); const t = id? db.maintenance.find(x=>x.id===id): {id:uid('mt'),date:todayISO(),itemId:'',desc:'',vendor:'',cost:'',status:'مفتوح'}; wrap.style.display='block'; wrap.innerHTML =  <h3>${id?'تعديل تذكرة صيانة':'فتح تذكرة صيانة'}</h3> <div class="grid cols-4"> <div><label>التاريخ</label><input id="t_date" type="date" value="${t.date}"/></div> <div><label>العنصر</label><select id="t_item">${db.items.map(i=><option value="${i.id}" ${i.id===t.itemId?'selected':''}>${i.name}</option>).join('')}</select></div> <div><label>المورّد/مركز الصيانة</label><input id="t_vendor" value="${t.vendor||''}"/></div> <div><label>التكلفة</label><input id="t_cost" type="number" step="0.01" value="${t.cost||''}"/></div> <div class="cols-2" style="grid-column:span 2"><label>الوصف</label><textarea id="t_desc">${t.desc||''}</textarea></div> <div><label>الحالة</label><select id="t_status">${['مفتوح','قيد التنفيذ','مغلق'].map(s=><option ${s===t.status?'selected':''}>${s}</option>).join('')}</select></div> </div> <div class="row" style="margin-top:10px"> <button class="btn primary" onclick="saveTicket('${id||''}')">💾 حفظ</button> <button class="btn ghost" onclick="document.getElementById('m_form').style.display='none'">إغلاق</button> </div> ; }
+
+function saveTicket(id){ const t = id? db.maintenance.find(x=>x.id===id): {id:uid('mt')}; Object.assign(t, { date: document.getElementById('t_date').value||todayISO(), itemId: document.getElementById('t_item').value, vendor: document.getElementById('t_vendor').value.trim(), cost: document.getElementById('t_cost').value, desc: document.getElementById('t_desc').value.trim(), status: document.getElementById('t_status').value }); if(!id) db.maintenance.push(t); save(); renderMaintenance(); } function deleteTicket(id){ if(!confirm('تأكيد الحذف؟'))return; const i=db.maintenance.findIndex(x=>x.id===id); if(i>-1) db.maintenance.splice(i,1); save(); renderMaintenance(); } function exportMaintenanceCSV(){ const rows = [['التاريخ','العنصر','الوصف','المورّد','التكلفة','الحالة']]; db.maintenance.forEach(t=>rows.push([t.date,itemName(t.itemId),t.desc||'',t.vendor||'',t.cost||'',t.status])); exportCSV(rows,'maintenance.csv'); }
+
+/*********************************
+
+صفحة: الوثائق C12 + وثائق التصليح *********************************/ function renderDocuments(){ const el = document.getElementById('page_documents'); el.innerHTML = `
+
+ <div class="grid cols-2">
+   <div class="card">
+     <h3>📥 C12 / توزيع — دخول من المصلحة الأم</h3>
+     <div class="row"><button class="btn primary" onclick="openC12Form('in')">➕ إضافة وثيقة</button></div>
+     <div id="c12_in_form" class="hide"></div>
+     <table style="margin-top:10px"><thead><tr><th>#</th><th>رقم الوثيقة</th><th>التاريخ</th><th>العنصر</th><th>حالة العتاد</th><th>ملاحظة</th><th>إجراءات</th></tr></thead>
+       <tbody>
+         ${db.docs.c12_in.map((d,idx)=>`<tr>
+           <td class="numbers-latin">${idx+1}</td>
+           <td class="numbers-latin">${d.id}</td>
+           <td class="numbers-latin">${d.date}</td>
+           <td>${itemName(d.itemId)}</td>
+           <td>${d.condition||''}</td>
+           <td>${d.note||''}</td>
+           <td><button class="btn ghost" onclick="openC12Form('in','${d.id}')">تعديل</button> <button class="btn danger" onclick="deleteDoc('in','${d.id}')">حذف</button></td>
+         </tr>`).join('')}
+       </tbody>
+     </table>
+   </div>   <div class="card">
+     <h3>📤 C12 / استرجاع — خروج إلى المصلحة الأم</h3>
+     <div class="row"><button class="btn primary" onclick="openC12Form('out')">➕ إضافة وثيقة</button></div>
+     <div id="c12_out_form" class="hide"></div>
+     <table style="margin-top:10px"><thead><tr><th>#</th><th>رقم الوثيقة</th><th>التاريخ</th><th>العنصر</th><th>حالة العتاد</th><th>ملاحظة</th><th>إجراءات</th></tr></thead>
+       <tbody>
+         ${db.docs.c12_out.map((d,idx)=>`<tr>
+           <td class="numbers-latin">${idx+1}</td>
+           <td class="numbers-latin">${d.id}</td>
+           <td class="numbers-latin">${d.date}</td>
+           <td>${itemName(d.itemId)}</td>
+           <td>${d.condition||''}</td>
+           <td>${d.note||''}</td>
+           <td><button class="btn ghost" onclick="openC12Form('out','${d.id}')">تعديل</button> <button class="btn danger" onclick="deleteDoc('out','${d.id}')">حذف</button></td>
+         </tr>`).join('')}
+       </tbody>
+     </table>
+   </div>   <div class="card" style="grid-column:span 2">
+     <h3>🧾 وثائق التصليح</h3>
+     <div class="row"><button class="btn primary" onclick="openRepairDocForm()">➕ إضافة وثيقة تصليح</button></div>
+     <div id="rep_form" class="hide"></div>
+     <table style="margin-top:10px"><thead><tr><th>#</th><th>رقم الوثيقة</th><th>التاريخ</th><th>العنصر</th><th>وصف العطل</th><th>المورّد</th><th>التكلفة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+       <tbody>
+         ${db.docs.repair.map((r,idx)=>`<tr>
+           <td class="numbers-latin">${idx+1}</td>
+           <td class="numbers-latin">${r.id}</td>
+           <td class="numbers-latin">${r.date}</td>
+           <td>${itemName(r.itemId)}</td>
+           <td>${r.desc||''}</td>
+           <td>${r.vendor||''}</td>
+           <td class="numbers-latin">${r.cost||''}</td>
+           <td>${r.status||''}</td>
+           <td><button class="btn ghost" onclick="openRepairDocForm('${r.id}')">تعديل</button> <button class="btn danger" onclick="deleteRepairDoc('${r.id}')">حذف</button></td>
+         </tr>`).join('')}
+       </tbody>
+     </table>
+   </div>
+ </div>
+`; }
+
+function openC12Form(kind, id){ const list = kind==='in'? db.docs.c12_in : db.docs.c12_out; const wrap = document.getElementById('c12_'+kind+'_form'); const d = id? list.find(x=>x.id===id): {id: '', date: todayISO(), itemId:'', condition:'', note:''}; wrap.classList.remove('hide'); wrap.innerHTML =  <div class="card" style="background:#0b1220;margin-top:10px"> <div class="grid cols-4"> <div><label>رقم الوثيقة</label><input id="d_id" value="${d.id}" placeholder="مثل: C12-2025-001"/></div> <div><label>التاريخ</label><input id="d_date" type="date" value="${d.date}"/></div> <div><label>العنصر</label><select id="d_item">${db.items.map(i=><option value="${i.id}" ${i.id===d.itemId?'selected':''}>${i.name}</option>).join('')}</select></div> <div><label>حالة العتاد</label><input id="d_cond" value="${d.condition||''}" placeholder="جيد/متوسط/متدهور..."/></div> <div class="cols-2" style="grid-column:span 2"><label>ملاحظات</label><textarea id="d_note">${d.note||''}</textarea></div> </div> <div class="row" style="margin-top:10px"> <button class="btn primary" onclick="saveC12('${kind}','${id||''}')">💾 حفظ</button> <button class="btn ghost" onclick="document.getElementById('c12_${kind}_form').classList.add('hide')">إغلاق</button> </div> </div> ; }
+
+function saveC12(kind, id){ const list = kind==='in'? db.docs.c12_in : db.docs.c12_out; let d = id? list.find(x=>x.id===id): { }; const newId = document.getElementById('d_id').value.trim(); Object.assign(d, { id: newId, date: document.getElementById('d_date').value||todayISO(), itemId: document.getElementById('d_item').value, condition: document.getElementById('d_cond').value.trim(), note: document.getElementById('d_note').value.trim() }); if(!id){ // منع تكرار نفس رقم الوثيقة if(list.some(x=>x.id===d.id)) return alert('هذا رقم الوثيقة موجود مسبقًا'); list.push(d); } save(); renderDocuments(); } function deleteDoc(kind, id){ const list = kind==='in'? db.docs.c12_in : db.docs.c12_out; if(!confirm('تأكيد حذف الوثيقة؟')) return; const i=list.findIndex(x=>x.id===id); if(i>-1) list.splice(i,1); save(); renderDocuments(); }
+
+function openRepairDocForm(id){ const wrap=document.getElementById('rep_form'); const r = id? db.docs.repair.find(x=>x.id===id): {id:'',date:todayISO(),itemId:'',desc:'',vendor:'',cost:'',status:'قيد الإصلاح'}; wrap.classList.remove('hide'); wrap.innerHTML =  <div class="card" style="background:#0b1220;margin-top:10px"> <div class="grid cols-4"> <div><label>رقم الوثيقة</label><input id="r_id" value="${r.id}" placeholder="REP-2025-001"/></div> <div><label>التاريخ</label><input id="r_date" type="date" value="${r.date}"/></div> <div><label>العنصر</label><select id="r_item">${db.items.map(i=><option value="${i.id}" ${i.id===r.itemId?'selected':''}>${i.name}</option>).join('')}</select></div> <div><label>المورّد/مركز الصيانة</label><input id="r_vendor" value="${r.vendor||''}"/></div> <div class="cols-2" style="grid-column:span 2"><label>وصف العطل</label><textarea id="r_desc">${r.desc||''}</textarea></div> <div><label>التكلفة</label><input id="r_cost" type="number" step="0.01" value="${r.cost||''}"/></div> <div><label>الحالة</label><select id="r_status">${['قيد التشخيص','قيد الإصلاح','جاهز للاستلام','مغلق'].map(s=><option ${s===r.status?'selected':''}>${s}</option>).join('')}</select></div> </div> <div class="row" style="margin-top:10px"> <button class="btn primary" onclick="saveRepairDoc('${id||''}')">💾 حفظ</button> <button class="btn ghost" onclick="document.getElementById('rep_form').classList.add('hide')">إغلاق</button> </div> </div> ; } function saveRepairDoc(id){ let r = id? db.docs.repair.find(x=>x.id===id): {}; const newId = document.getElementById('r_id').value.trim(); Object.assign(r, { id: newId, date: document.getElementById('r_date').value||todayISO(), itemId: document.getElementById('r_item').value, vendor: document.getElementById('r_vendor').value.trim(), desc: document.getElementById('r_desc').value.trim(), cost: document.getElementById('r_cost').value, status: document.getElementById('r_status').value }); if(!id){ if(db.docs.repair.some(x=>x.id===r.id)) return alert('رقم الوثيقة مستخدم'); db.docs.repair.push(r); } save(); renderDocuments(); } function deleteRepairDoc(id){ if(!confirm('تأكيد الحذف؟'))return; const i=db.docs.repair.findIndex(x=>x.id===id); if(i>-1) db.docs.repair.splice(i,1); save(); renderDocuments(); }
+
+/*********************************
+
+صفحة: التقارير الشهرية *********************************/ function renderReports(){ const el=document.getElementById('page_reports'); const month = window.reportMonth || todayISO().slice(0,7); // تصفية حسب الشهر const moves = db.moves.filter(m=>m.date.startsWith(month)); const repairs = db.docs.repair.filter(r=>r.date.startsWith(month)); const c12in = db.docs.c12_in.filter(d=>d.date.startsWith(month)); const c12out= db.docs.c12_out.filter(d=>d.date.startsWith(month));
+
+
+const faulty = db.items.filter(i=>i.status==='bad').length; const fixing = db.items.filter(i=>i.status==='fix').length; const propose = db.items.filter(i=>i.status==='propose').length;
+
+el.innerHTML = ` <div class="card"> <div class="row"> <label>شهر التقرير</label> <input type="month" id="r_month" value="${month}" onchange="reportMonth=this.value; renderReports();"/> <button class="btn ghost" onclick="downloadReport('${month}')">🖨️ تنزيل تقرير نصي</button> </div> </div>
+
+<div class="grid cols-3">
+  <div class="card"><h3>حالة الشبكة</h3><div>عدد العناوين المسجّلة: <b class="numbers-latin">${db.items.filter(i=>i.net&&(i.net.ip||i.net.mac)).length}</b></div></div>
+  <div class="card"><h3>العتاد العاطل</h3><div class="numbers-latin">${faulty}</div></div>
+  <div class="card"><h3>قيد التصليح</h3><div class="numbers-latin">${fixing}</div></div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h3>حركة المستخدمين والتوزيع</h3>
+    <table><thead><tr><th>#</th><th>التاريخ</th><th>العنصر</th><th>المستخدم</th><th>ملاحظة</th></tr></thead>
+    <tbody>${moves.map((m,idx)=>`<tr><td class="numbers-latin">${idx+1}</td><td class="numbers-latin">${m.date}</td><td>${itemName(m.itemId)}</td><td>${userName(m.userId)||'-'}</td><td>${m.note||''}</td></tr>`).join('')}</tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>وثائق C12</h3>
+    <div>الدخول (توزيع): <b class="numbers-latin">${c12in.length}</b> — الخروج (استرجاع): <b class="numbers-latin">${c12out.length}</b></div>
+    <table style="margin-top:8px"><thead><tr><th>#</th><th>النوع</th><th>رقم الوثيقة</th><th>التاريخ</th><th>العنصر</th></tr></thead>
+    <tbody>
+      ${c12in.map((d,idx)=>`<tr><td class="numbers-latin">${idx+1}</td><td>دخول</td><td class="numbers-latin">${d.id}</td><td class="numbers-latin">${d.date}</td><td>${itemName(d.itemId)}</td></tr>`).join('')}
+      ${c12out.map((d,idx)=>`<tr><td class="numbers-latin">${idx+1}</td><td>خروج</td><td class="numbers-latin">${d.id}</td><td class="numbers-latin">${d.date}</td><td>${itemName(d.itemId)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>سجل التصليح خلال الشهر</h3>
+  <table><thead><tr><th>#</th><th>الوثيقة</th><th>التاريخ</th><th>العنصر</th><th>الوصف</th><th>الحالة</th><th>التكلفة</th></tr></thead>
+  <tbody>${repairs.map((r,idx)=>`<tr>
+    <td class="numbers-latin">${idx+1}</td>
+    <td class="numbers-latin">${r.id}</td>
+    <td class="numbers-latin">${r.date}</td>
+    <td>${itemName(r.itemId)}</td>
+    <td>${r.desc||''}</td>
+    <td>${r.status||''}</td>
+    <td class="numbers-latin">${r.cost||''}</td>
+  </tr>`).join('')}</tbody></table>
+</div>
+
+`; }
+
+function downloadReport(month){ const lines = []; const h = s=>lines.push('\n=== '+s+' ==='); lines.push('تقرير شهري — '+month); lines.push('إجمالي العتاد: '+db.items.length); lines.push('شغّال: '+db.items.filter(i=>i.status==='ok').length+ ', معطّل: '+db.items.filter(i=>i.status==='bad').length+', قيد التصليح: '+db.items.filter(i=>i.status==='fix').length+', مقترح للصرف: '+db.items.filter(i=>i.status==='propose').length); h('حركة المستخدمين'); db.moves.filter(m=>m.date.startsWith(month)).forEach(m=>lines.push(${m.date} | ${itemName(m.itemId)} -> ${userName(m.userId)||'-'} | ${m.note||''})); h('وثائق C12 دخول'); db.docs.c12_in.filter(d=>d.date.startsWith(month)).forEach(d=>lines.push(${d.date} | ${d.id} | ${itemName(d.itemId)} | ${d.condition||''})); h('وثائق C12 خروج'); db.docs.c12_out.filter(d=>d.date.startsWith(month)).forEach(d=>lines.push(${d.date} | ${d.id} | ${itemName(d.itemId)} | ${d.condition||''})); h('التصليح'); db.docs.repair.filter(r=>r.date.startsWith(month)).forEach(r=>lines.push(${r.date} | ${r.id} | ${itemName(r.itemId)} | ${r.status} | ${r.cost||''})); download(report_${month}.txt, lines.join('\n')); }
+
+/*********************************
+
+صفحة: النسخ الاحتياطي *********************************/ function renderBackup(){ const el=document.getElementById('page_backup'); el.innerHTML = `
+
+ <div class="card">
+   <div class="row">
+     <button class="btn primary" onclick="backupExport()">⬇️ تنزيل نسخة احتياطية (JSON)</button>
+     <label class="btn ghost" style="cursor:pointer">⬆️ استيراد نسخة<input id="backupFile" type="file" accept="application/json" style="display:none" onchange="backupImport(event)"></label>
+     <button class="btn warn" onclick="if(confirm('إعادة ضبط كامل؟')){ localStorage.removeItem(DB_KEY); location.reload(); }">♻️ إعادة ضبط</button>
+   </div>
+   <div class="footer">يتم التخزين محليًا فقط. احتفظ بنسخة خارجية بشكل دوري.</div>
+ </div>
+`; } function backupExport(){ download('it_yard_backup.json', JSON.stringify(db,null,2)); } function backupImport(ev){ const f = ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ try{ const json=JSON.parse(reader.result); localStorage.setItem(DB_KEY, JSON.stringify(json)); alert('تم الاستيراد بنجاح'); location.reload(); }catch(e){ alert('ملف غير صالح'); } }; reader.readAsText(f); }
+
+/*********************************
+
+إقلاع التطبيق + بيانات تجريبية خفيفة (اختيارية) *********************************/ function seedIfEmpty(){ if(db.items.length||db.users.length) return; const u1={id:uid('u'),fullName:'أحمد بن يوسف',role:'تقني إعلام آلي',dept:'المديرية',phone:'0550000000',email:'ahmed@example.com'}; const u2={id:uid('u'),fullName:'سميرة بوشارب',role:'إدارية',dept:'المالية',phone:'0661000000',email:'samira@example.com'}; db.users.push(u1,u2); db.items.push( {id:uid('it'),category:'computer',name:'حاسوب مكتب 01',brand:'Dell',model:'OptiPlex 7050',serial:'PC-7050-001',status:'ok',assignedTo:u1.id,net:{ip:'192.168.1.10',mac:'AA:BB:CC:DD:EE:01'},note:''}, {id:uid('it'),category:'monitor',name:'شاشة 24"',brand:'Samsung',model:'S24F350',serial:'MN-24-110',status:'ok',assignedTo:u1.id,net:{},note:''}, {id:uid('it'),category:'printer',name:'طابعة الإدارة',brand:'Canon',model:'LBP232',serial:'PR-232-77',status:'ok',assignedTo:u2.id,net:{ip:'192.168.1.50',mac:'AA:BB:CC:DD:EE:50'},printer:{toner:'60%'},note:''} ); db.moves.push({id:uid('mv'),date:todayISO(),action:'توزيع/تبديل',itemId:db.items[0].id,userId:u1.id,note:'تثبيت جديد'}); db.docs.c12_in.push({id:'C12-DEM-001',date:todayISO(),itemId:db.items[2].id,condition:'جيد',note:'وصل جديد'}); save(); }
+
+
+// بداية التشغيل load(); seedIfEmpty(); renderNav();
+
+goto('dashboard');
+
+document.getElementById('today').textContent = new Date().toLocaleDateString('ar-DZ', {year:'numeric',month:'long',day:'numeric'}); renderKPIs(); </script>
+
+</body>
+</html>
