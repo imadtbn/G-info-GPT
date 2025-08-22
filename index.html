@@ -1,486 +1,475 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!DOCTYPE html><html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة حضيرة الإعلام الآلي</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --accent: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #c0392b;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-        
-        .sidebar {
-            background-color: var(--primary);
-            color: white;
-            height: 100vh;
-            position: fixed;
-            padding-top: 20px;
-            overflow-y: auto;
-            width: 250px;
-            z-index: 1000;
-        }
-        
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            display: block;
-            padding: 12px 20px;
-            transition: all 0.3s;
-            border-right: 4px solid transparent;
-        }
-        
-        .sidebar a:hover {
-            background-color: var(--secondary);
-        }
-        
-        .sidebar a.active {
-            background-color: var(--secondary);
-            border-right: 4px solid var(--accent);
-        }
-        
-        .main-content {
-            margin-right: 250px;
-            padding: 20px;
-        }
-        
-        .card {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-            margin-bottom: 20px;
-            border: none;
-            border-radius: 10px;
-        }
-        
-        .card:hover {
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
-        
-        .card-header {
-            background-color: var(--primary);
-            color: white;
-            border-radius: 10px 10px 0 0 !important;
-            padding: 15px 20px;
-        }
-        
-        .stats-card {
-            text-align: center;
-            padding: 15px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-        
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stats-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--secondary);
-        }
-        
-        .device-status {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        
-        .status-working {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status-maintenance {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-broken {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .nav-tabs .nav-link.active {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-        }
-        
-        .nav-tabs .nav-link {
-            color: var(--dark);
-        }
-        
-        .btn-primary {
-            background-color: var(--secondary);
-            border: none;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary);
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--dark);
-        }
-        
-        .table th {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .progress {
-            height: 10px;
-        }
-        
-        .document-card {
-            border-left: 4px solid var(--secondary);
-        }
-        
-        .document-card.c12-in {
-            border-left-color: var(--success);
-        }
-        
-        .document-card.c12-out {
-            border-left-color: var(--danger);
-        }
-        
-        .document-card.repair {
-            border-left-color: var(--warning);
-        }
-        
-        .c12-document {
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background-color: #fff;
-        }
-        
-        .c12-header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #ddd;
-        }
-        
-        .c12-content {
-            margin-bottom: 20px;
-        }
-        
-        .c12-footer {
-            text-align: center;
-            padding-top: 15px;
-            border-top: 2px solid #ddd;
-        }
-        
-        .device-badge {
-            font-size: 0.8rem;
-            padding: 5px 10px;
-            border-radius: 15px;
-            margin: 2px;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-            
-            .main-content {
-                margin-right: 0;
-            }
-        }
-        
-        .export-section {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .system-health {
-            display: flex;
-            margin-bottom: 15px;
-        }
-        
-        .health-item {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            border-right: 1px solid #ddd;
-        }
-        
-        .health-item:last-child {
-            border-right: none;
-        }
-        
-        .health-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        
-        .health-label {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-        
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: var(--accent);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-        }
-        
-        .btn-action {
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- الشريط الجانبي -->
-            <div class="col-md-3 col-lg-2 sidebar">
-                <h3 class="text-center mb-4">نظام الإدارة</h3>
-                <div class="list-group">
-                    <a href="#" class="active"><i class="bi bi-house-door me-2"></i> الرئيسية</a>
-                    <a href="#"><i class="bi bi-pc me-2"></i> إدارة الأجهزة</a>
-                    <a href="#"><i class="bi bi-person me-2"></i> إدارة المستخدمين</a>
-                    <a href="#"><i class="bi bi-distribute-vertical me-2"></i> توزيع الأجهزة</a>
-                    <a href="#"><i class="bi bi-tools me-2"></i> إدارة الأعطال</a>
-                    <a href="#"><i class="bi bi-printer me-2"></i> حالة الطابعات</a>
-                    <a href="#"><i class="bi bi-file-text me-2"></i> وثائق C12</a>
-                    <a href="#"><i class="bi bi-wrench me-2"></i> وثائق الصيانة</a>
-                    <a href="#"><i class="bi bi-clipboard-data me-2"></i> التقارير</a>
-                    <a href="#"><i class="bi bi-database me-2"></i> النسخ الاحتياطي</a>
-                    <a href="#"><i class="bi bi-gear me-2"></i> الإعدادات</a>
-                </div>
-                
-                <div class="mt-4 p-3" style="background-color: rgba(0,0,0,0.2); border-radius: 10px;">
-                    <h6>حالة النظام</h6>
-                    <div class="system-health">
-                        <div class="health-item">
-                            <div class="health-value text-success">95%</div>
-                            <div class="health-label">الأجهزة</div>
-                        </div>
-                        <div class="health-item">
-                            <div class="health-value text-warning">78%</div>
-                            <div class="health-label">الشبكة</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>نظام إدارة حضيرة الإعلام الآلي — محلي</title>
+  <meta name="description" content="لوحة تحكم محلية لإدارة الأجهزة، المستخدمين، C12 (تسليم)، C7 (صيانة)، حفظ تلقائي، واستيراد/تصدير Excel." />  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>  <style>
+    body{font-family: 'Cairo', sans-serif}
+    @media print{.no-print{display:none!important}}
+    .badge{display:inline-block;padding:4px 8px;border-radius:8px;font-size:12px}
+  </style></head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="min-h-screen grid grid-cols-1 lg:grid-cols-[260px_1fr]">
+    <aside class="bg-white dark:bg-gray-950 border-r dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="text-2xl">🖥️</div>
+        <div class="font-bold text-lg">حضيرة الإعلام الآلي</div>
+      </div>
+      <nav class="space-y-2">
+        <button data-tab="dashboard" class="tabBtn w-full text-right px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">لوحة التحكم</button>
+        <button data-tab="devices" class="tabBtn w-full text-right px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">الأجهزة</button>
+        <button data-tab="users" class="tabBtn w-full text-right px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">المستخدمون</button>
+        <button data-tab="c12" class="tabBtn w-full text-right px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">C12 - التسليم</button>
+        <button data-tab="c7" class="tabBtn w-full text-right px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">C7 - الصيانة</button>
+        <div class="mt-4 border-t pt-3">
+          <button id="exportAll" class="w-full text-right px-3 py-2 rounded-lg bg-green-600 text-white">تصدير كل البيانات</button>
+          <label class="w-full block mt-2 cursor-pointer rounded-lg border px-3 py-2 text-right"><i class="fa-solid fa-upload"></i> استيراد ملف Excel
+            <input id="importAll" type="file" accept=".xlsx,.xls" class="hidden" />
+          </label>
+          <button id="resetData" class="w-full mt-2 text-right px-3 py-2 rounded-lg border">تهيئة قاعدة بيانات جديدة</button>
+        </div>
+      </nav>
+    </aside><main class="p-6">
+  <!-- Dashboard -->
+  <section id="dashboard" class="tabContent">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">لوحة التحكم</h1>
+      <div class="text-sm text-gray-600">حفظ تلقائي: <span id="autoSaveStatus">جاهز</span></div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="p-4 bg-white rounded-lg shadow-sm dark:bg-gray-800">
+        <div class="text-sm text-gray-500">إجمالي الأجهزة</div>
+        <div id="statDevices" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="p-4 bg-white rounded-lg shadow-sm dark:bg-gray-800">
+        <div class="text-sm text-gray-500">أجهزة متصلة بالشبكة</div>
+        <div id="statOnline" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="p-4 bg-white rounded-lg shadow-sm dark:bg-gray-800">
+        <div class="text-sm text-gray-500">أوراق C12</div>
+        <div id="statC12" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="p-4 bg-white rounded-lg shadow-sm dark:bg-gray-800">
+        <div class="text-sm text-gray-500">أوراق C7 (قيد الإصلاح)</div>
+        <div id="statC7Repair" class="text-2xl font-bold">0</div>
+      </div>
+    </div>
+    <div class="mb-6">
+      <h3 class="font-bold mb-2">بحث سريع</h3>
+      <input id="globalSearch" placeholder="ابحث باسم الجهاز أو الرقم التسلسلي أو اسم المستخدم..." class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800" />
+    </div>
+    <div>
+      <h3 class="font-bold mb-2">آخر التعديلات</h3>
+      <ul id="recentList" class="list-disc pl-6 text-sm text-gray-700 dark:text-gray-300"></ul>
+    </div>
+  </section>
 
-            <!-- المحتوى الرئيسي -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>لوحة تحكم إدارة الحضيرة</h2>
-                    <div>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
-                            <i class="bi bi-plus-circle me-1"></i> إضافة جهاز
-                        </button>
-                        <button class="btn btn-outline-secondary" id="exportBtn">
-                            <i class="bi bi-download me-1"></i> تصدير إلى Excel
-                        </button>
-                        <div class="btn-group ms-2">
-                            <button type="button" class="btn btn-success position-relative" id="notificationsBtn">
-                                <i class="bi bi-bell"></i>
-                                <span class="notification-badge">3</span>
-                            </button>
-                            <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span class="visually-hidden">Toggle Dropdown</span>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">طابعة تحتاج حبر <span class="badge bg-danger">عاجل</span></a></li>
-                                <li><a class="dropdown-item" href="#">جهاز معطل يحتاج صيانة</a></li>
-                                <li><a class="dropdown-item" href="#">مستخدم جديد يحتاج جهاز</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#">عرض جميع الإشعارات</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+  <!-- Devices -->
+  <section id="devices" class="tabContent hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">الأجهزة</h2>
+      <button id="addDeviceBtn" class="px-4 py-2 rounded-lg bg-primary-600 text-white">إضافة جهاز جديد</button>
+    </div>
+    <div class="overflow-auto bg-white rounded-lg dark:bg-gray-800 p-2">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-900">
+          <tr>
+            <th class="px-3 py-2 text-right">#</th>
+            <th class="px-3 py-2 text-right">اسم الجهاز</th>
+            <th class="px-3 py-2 text-right">المستخدم</th>
+            <th class="px-3 py-2 text-right">الرقم التسلسلي</th>
+            <th class="px-3 py-2 text-right">الشبكة</th>
+            <th class="px-3 py-2 text-right">نظام التشغيل</th>
+            <th class="px-3 py-2 text-right">مضاد الفيروسات</th>
+            <th class="px-3 py-2 text-right">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="devicesTbody"></tbody>
+      </table>
+    </div>
+  </section>
 
-                <!-- إحصائيات سريعة -->
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="card stats-card" onclick="showTab('devices')">
-                            <div class="stats-number">156</div>
-                            <div class="stats-title">عدد الأجهزة</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stats-card" onclick="showTab('maintenance')">
-                            <div class="stats-number">12</div>
-                            <div class="stats-title">أجهزة تحت الصيانة</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stats-card" onclick="showTab('printers')">
-                            <div class="stats-number">5</div>
-                            <div class="stats-title">طابعات تحتاج حبر</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stats-card" onclick="showTab('distribution')">
-                            <div class="stats-number">32</div>
-                            <div class="stats-title">المستخدمين النشطين</div>
-                        </div>
-                    </div>
-                </div>
+  <!-- Users -->
+  <section id="users" class="tabContent hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">قائمة المستخدمين</h2>
+      <button id="addUserBtn" class="px-4 py-2 rounded-lg bg-primary-600 text-white">إضافة مستخدم</button>
+    </div>
+    <div class="bg-white rounded-lg p-3 dark:bg-gray-800">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-900">
+          <tr>
+            <th class="px-3 py-2 text-right">#</th>
+            <th class="px-3 py-2 text-right">الاسم</th>
+            <th class="px-3 py-2 text-right">الاختصاص</th>
+            <th class="px-3 py-2 text-right">الشهادات</th>
+            <th class="px-3 py-2 text-right">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="usersTbody"></tbody>
+      </table>
+    </div>
+  </section>
 
-                <!-- قسم التصدير والنسخ الاحتياطي -->
-                <div class="export-section">
-                    <h4 class="mb-3">النسخ الاحتياطي والاستيراد</h4>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-success" id="backupBtn">
-                                    <i class="bi bi-cloud-arrow-down me-1"></i> إنشاء نسخة احتياطية
-                                </button>
-                                <button class="btn btn-info" id="importBtn">
-                                    <i class="bi bi-cloud-arrow-up me-1"></i> استيراد نسخة احتياطية
-                                </button>
-                                <button class="btn btn-warning" id="generateReportBtn">
-                                    <i class="bi bi-file-earmark-text me-1"></i> إنشاء تقرير شهري
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6>آخر نسخة احتياطية</h6>
-                                    <p id="lastBackupDate">2023-10-20 14:32</p>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="autoBackup">
-                                        <label class="form-check-label" for="autoBackup">النسخ التلقائي</label>
-                                    </div>
-                                    <div class="mt-3">
-                                        <h6>مساحة التخزين</h6>
-                                        <div class="progress">
-                                            <div class="progress-bar" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65%</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <!-- C12 -->
+  <section id="c12" class="tabContent hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">وثائق C12 - تسليم/استرجاع</h2>
+      <button id="addC12Btn" class="px-4 py-2 rounded-lg bg-primary-600 text-white">إنشاء وثيقة C12</button>
+    </div>
+    <div class="bg-white rounded-lg p-3 dark:bg-gray-800">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-900">
+          <tr>
+            <th class="px-3 py-2 text-right">#</th>
+            <th class="px-3 py-2 text-right">رقم الوثيقة</th>
+            <th class="px-3 py-2 text-right">التاريخ</th>
+            <th class="px-3 py-2 text-right">الجهاز</th>
+            <th class="px-3 py-2 text-right">المستلم</th>
+            <th class="px-3 py-2 text-right">الجهة</th>
+            <th class="px-3 py-2 text-right">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="c12Tbody"></tbody>
+      </table>
+    </div>
+  </section>
 
-                <!-- محتوى متعدد التبويبات -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs" id="mainTabs">
-                            <li class="nav-item">
-                                <a class="nav-link active" data-bs-toggle="tab" href="#devices">الأجهزة</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="tab" href="#distribution">التوزيع</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="tab" href="#maintenance">الصيانة</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="tab" href="#printers">الطابعات</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="tab" href="#documents">الوثائق</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="tab" href="#reports">التقارير</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-body">
-                        <div class="tab-content">
-                            <!-- تبويب الأجهزة -->
-                            <div class="tab-pane fade show active" id="devices">
-                                <div class="d-flex justify-content-between mb-3">
-                                    <h5>قائمة الأجهزة</h5>
-                                    <div class="d-flex">
-                                        <input type="text" class="form-control me-2" placeholder="بحث..." id="searchDevices">
-                                        <select class="form-select me-2" id="deviceTypeFilter">
-                                            <option value="">جميع الأنواع</option>
-                                            <option value="حاسوب">حاسوب</option>
-                                            <option value="شاشة">شاشة</option>
-                                            <option value="طابعة">طابعة</option>
-                                            <option value="شبكة">شبكة</option>
-                                        </select>
-                                        <button class="btn btn-outline-primary" id="refreshDevicesBtn">
-                                            <i class="bi bi-arrow-clockwise"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-hover" id="devicesTable">
-                                        <thead>
-                                            <tr>
-                                                <th>النوع</th>
-                                                <th>العلامة/الماركة</th>
-                                                <th>النموذج</th>
-                                                <th>الرقم التسلسلي</th>
-                                                <th>التسمية</th>
-                                                <th>المستخدم</th>
-                                                <th>عنوان IP</th>
-                                                <th>عنوان MAC</th>
-                                                <th>الحالة</th>
-                                                <th>الإجراءات</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- سيتم ملء هذا الجدول بواسطة JavaScript -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+  <!-- C7 -->
+  <section id="c7" class="tabContent hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">وثائق C7 - صيانة</h2>
+      <button id="addC7Btn" class="px-4 py-2 rounded-lg bg-primary-600 text-white">إنشاء ورقة صيانة</button>
+    </div>
+    <div class="bg-white rounded-lg p-3 dark:bg-gray-800">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-900">
+          <tr>
+            <th class="px-3 py-2 text-right">#</th>
+            <th class="px-3 py-2 text-right">رقم الوثيقة</th>
+            <th class="px-3 py-2 text-right">التاريخ</th>
+            <th class="px-3 py-2 text-right">الجهاز</th>
+            <th class="px-3 py-2 text-right">العطل</th>
+            <th class="px-3 py-2 text-right">الحالة</th>
+            <th class="px-3 py-2 text-right">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="c7Tbody"></tbody>
+      </table>
+    </div>
+  </section>
 
-                            <!-- تبويب التوزيع -->
-                            <div class="tab-pane fade" id="distribution">
-                                <h5>توزيع الأجهزة على المستخدمين</h5>
-                                <div class="row mt-4">
-                                    <div class="col-md-6">
-                                        <div class="card">
-                                            <div class="card-header bg-success text-white">
-                                                <i class="bi bi-person-check me-2"></i> توزيع جديد
-                                            </div>
-                                            <div class="card-body">
-                                                <form id="distributionForm">
-                                                    <div class="mb-3">
-                                                        <label class="form-label">المستخدم</label>
-                                                        <select class="form-select" id="userSelect" required>
-                                                            <option value="" selected disabled>اختر مستخدم...</option>
-                                                            <!-- سيتم ملء هذا القائمة بواسطة JavaScript -->
-                                                        </select>
-                                                    </div>
-                                                    <div 
+</main>
+
+  </div>  <!-- نماذج مخفية -->  <div id="modals" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/40">
+    <div id="modalContent" class="bg-white dark:bg-gray-900 rounded-lg w-full max-w-2xl p-4"></div>
+  </div>  <script>
+    // ======= مفاتيح التخزين ======
+    const KEYS = { DEV:'devices', USERS:'users', C12:'c12', C7:'c7', COUNTERS:'counters', RECENT:'recent' }
+
+    // ==== مساعدة DOM =====
+    const $ = s => document.querySelector(s)
+    const $$ = s => Array.from(document.querySelectorAll(s))
+
+    // ==== تهيئة قاعدة البيانات المحلية إذا لم تكن موجودة =====
+    function initDB(){
+      if(!localStorage.getItem(KEYS.DEV)){
+        localStorage.setItem(KEYS.DEV, JSON.stringify([]))
+      }
+      if(!localStorage.getItem(KEYS.USERS)) localStorage.setItem(KEYS.USERS, JSON.stringify([]))
+      if(!localStorage.getItem(KEYS.C12)) localStorage.setItem(KEYS.C12, JSON.stringify([]))
+      if(!localStorage.getItem(KEYS.C7)) localStorage.setItem(KEYS.C7, JSON.stringify([]))
+      if(!localStorage.getItem(KEYS.COUNTERS)) localStorage.setItem(KEYS.COUNTERS, JSON.stringify({ dev:0, user:0, c12:0, c7:0 }))
+      if(!localStorage.getItem(KEYS.RECENT)) localStorage.setItem(KEYS.RECENT, JSON.stringify([]))
+    }
+
+    function load(key){ try{return JSON.parse(localStorage.getItem(key))||[]}catch{return []} }
+    function save(key, data){ localStorage.setItem(key, JSON.stringify(data)); autoSaveNotice(); }
+
+    // حفظ تلقائي - إظهار حالة
+    let saveTimer = null
+    function autoSaveNotice(){
+      $('#autoSaveStatus').textContent = 'تم الحفظ تلقائياً — ' + new Date().toLocaleTimeString()
+      clearTimeout(saveTimer)
+      saveTimer = setTimeout(()=>{ $('#autoSaveStatus').textContent = 'جاهز' }, 3000)
+      pushRecent('حفظ البيانات محليًا')
+    }
+
+    function pushRecent(txt){
+      const recent = load(KEYS.RECENT)
+      recent.unshift({t:new Date().toLocaleString(),msg:txt})
+      if(recent.length>10) recent.pop()
+      save(KEYS.RECENT, recent)
+      renderRecent()
+    }
+
+    function renderRecent(){
+      const list = load(KEYS.RECENT)
+      const ul = $('#recentList'); ul.innerHTML=''
+      list.forEach(it => { const li=document.createElement('li'); li.textContent = `${it.t} — ${it.msg}`; ul.appendChild(li) })
+    }
+
+    // ====== عناصر التبويب ======
+    $$('.tabBtn').forEach(btn=>btn.addEventListener('click', ()=>{
+      const tab = btn.dataset.tab
+      $$('.tabContent').forEach(s=>s.classList.add('hidden'))
+      $(`#${tab}`).classList.remove('hidden')
+      renderAll()
+    }))
+
+    // ======= رندر عام ======
+    function renderAll(){ renderStats(); renderDevices(); renderUsers(); renderC12(); renderC7(); renderRecent(); }
+
+    function renderStats(){
+      const devs = load(KEYS.DEV)
+      $('#statDevices').textContent = devs.length
+      $('#statOnline').textContent = devs.filter(d=>d.network && d.network.connected).length
+      $('#statC12').textContent = load(KEYS.C12).length
+      $('#statC7Repair').textContent = load(KEYS.C7).filter(x=>x.status==='قيد الإصلاح').length
+    }
+
+    // ======== الأجهزة ========
+    function renderDevices(){
+      const arr = load(KEYS.DEV)
+      const tbody = $('#devicesTbody'); tbody.innerHTML=''
+      arr.forEach((d,i)=>{
+        const tr = document.createElement('tr')
+        tr.className = i%2? 'bg-gray-50/50':' '
+        tr.innerHTML = `
+          <td class="px-3 py-2">${i+1}</td>
+          <td class="px-3 py-2">${d.name}</td>
+          <td class="px-3 py-2">${d.userName||''}</td>
+          <td class="px-3 py-2">${d.sn}</td>
+          <td class="px-3 py-2">${d.network && d.network.connected ? `<span class=\"badge bg-green-100 text-green-800\">متصل (${d.network.ip||''})</span>` : `<span class=\"badge bg-red-100 text-red-800\">معزول</span>`}</td>
+          <td class="px-3 py-2">${d.osName||''}<br><small>آخر تحديث: ${d.osLastUpdate||''}</small></td>
+          <td class="px-3 py-2">${d.avStatus||''}<br><small>${d.avScan||''}</small></td>
+          <td class="px-3 py-2">
+            <button data-id="${d.id}" class="editDevice px-2 py-1 rounded border">تعديل</button>
+            <button data-id="${d.id}" class="delDevice px-2 py-1 rounded border ml-2">حذف</button>
+          </td>`
+        tbody.appendChild(tr)
+      })
+      // أحداث الأزرار
+      $$('.editDevice').forEach(b=>b.addEventListener('click', e=>openDeviceModal(e.target.dataset.id)))
+      $$('.delDevice').forEach(b=>b.addEventListener('click', e=>deleteDevice(e.target.dataset.id)))
+    }
+
+    function openDeviceModal(id){
+      const dev = load(KEYS.DEV).find(x=>x.id==id) || null
+      const html = renderDeviceForm(dev)
+      openModal(html)
+      attachDeviceFormHandlers(dev)
+    }
+
+    function renderDeviceForm(dev){
+      const isNew = !dev
+      const d = dev || { name:'', userId:'', userName:'', sn:'', cpu:'', monitor:'', mouse:'', keyboard:'', printer:{name:'',connected:false,ip:'',mac:''}, network:{connected:false,ip:'',mac:''}, osName:'', osLastUpdate:'', avStatus:'', avScan:'' }
+      return `
+        <h3 class='text-lg font-bold mb-2'>${isNew? 'إضافة جهاز جديد':'تعديل جهاز'}</h3>
+        <div class='grid grid-cols-1 gap-2'>
+          <label>اسم الجهاز<input id='d_name' value='${escapeHtml(d.name)}' class='w-full rounded border px-2 py-1' /></label>
+          <label>المستخدم
+            <select id='d_user' class='w-full rounded border px-2 py-1'>
+              <option value=''>-- اختر مستخدم --</option>
+              ${load(KEYS.USERS).map(u=>`<option value='${u.id}' ${u.id===d.userId? 'selected':''}>${escapeHtml(u.name)}</option>`).join('')}
+            </select>
+          </label>
+          <label>الرقم التسلسلي<input id='d_sn' value='${escapeHtml(d.sn)}' class='w-full rounded border px-2 py-1' /></label>
+          <label>الوحدة المركزية<input id='d_cpu' value='${escapeHtml(d.cpu)}' class='w-full rounded border px-2 py-1' /></label>
+          <label>الشاشة<input id='d_monitor' value='${escapeHtml(d.monitor)}' class='w-full rounded border px-2 py-1' /></label>
+          <label>الفأرة<input id='d_mouse' value='${escapeHtml(d.mouse)}' class='w-full rounded border px-2 py-1' /></label>
+          <label>لوحة المفاتيح<input id='d_keyboard' value='${escapeHtml(d.keyboard)}' class='w-full rounded border px-2 py-1' /></label>
+          <label>الطابعة - الاسم<input id='p_name' value='${escapeHtml(d.printer?.name||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label class='flex gap-2 items-center'><input id='p_connected' type='checkbox' ${d.printer?.connected? 'checked':''}/> الطابعة متصلة</label>
+          <label>طابعة IP<input id='p_ip' value='${escapeHtml(d.printer?.ip||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label>طابعة MAC<input id='p_mac' value='${escapeHtml(d.printer?.mac||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label class='flex gap-2 items-center'><input id='net_connected' type='checkbox' ${d.network?.connected? 'checked':''}/> الجهاز متصل بالشبكة</label>
+          <label>IP الجهاز<input id='net_ip' value='${escapeHtml(d.network?.ip||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label>MAC الجهاز<input id='net_mac' value='${escapeHtml(d.network?.mac||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label>نظام التشغيل<input id='os_name' value='${escapeHtml(d.osName||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label>آخر تحديث للنظام<input id='os_update' type='date' value='${d.osLastUpdate||''}' class='w-full rounded border px-2 py-1' /></label>
+          <label>مضاد الفيروسات<input id='av_status' value='${escapeHtml(d.avStatus||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <label>نتيجة الفحص<input id='av_scan' value='${escapeHtml(d.avScan||'')}' class='w-full rounded border px-2 py-1' /></label>
+          <div class='flex justify-end gap-2 mt-2'>
+            <button id='cancelModal' class='px-3 py-1 rounded border'>إلغاء</button>
+            <button id='saveDevice' class='px-3 py-1 rounded bg-primary-600 text-white'>حفظ</button>
+          </div>
+        </div>`
+    }
+
+    function attachDeviceFormHandlers(dev){
+      $('#cancelModal').addEventListener('click', closeModal)
+      $('#saveDevice').addEventListener('click', ()=>{
+        try{
+          const name = $('#d_name').value.trim()
+          const sn = $('#d_sn').value.trim()
+          if(!name || !sn) return alert('اسم الجهاز والرقم التسلسلي مطلوبان')
+          // تحقق تكرار SN عام
+          const all = load(KEYS.DEV)
+          if(!dev){ if(all.some(x=>x.sn===sn)){ alert('يوجد جهاز بنفس الرقم التسلسلي. الرجاء التحقق.'); return } }
+          const counters = load(KEYS.COUNTERS)
+          if(!dev) counters.dev = (counters.dev||0)+1
+          // بناء الكائن
+          const obj = dev || { id: 'DEV-'+(counters.dev||0) }
+          obj.name = name
+          obj.userId = $('#d_user').value || ''
+          obj.userName = ($('#d_user').selectedOptions[0]? $('#d_user').selectedOptions[0].text : '')
+          obj.sn = sn
+          obj.cpu = $('#d_cpu').value
+          obj.monitor = $('#d_monitor').value
+          obj.mouse = $('#d_mouse').value
+          obj.keyboard = $('#d_keyboard').value
+          obj.printer = { name: $('#p_name').value, connected: !!$('#p_connected').checked, ip: $('#p_ip').value, mac: $('#p_mac').value }
+          obj.network = { connected: !!$('#net_connected').checked, ip: $('#net_ip').value, mac: $('#net_mac').value }
+          obj.osName = $('#os_name').value
+          obj.osLastUpdate = $('#os_update').value
+          obj.avStatus = $('#av_status').value
+          obj.avScan = $('#av_scan').value
+
+          let arr = load(KEYS.DEV)
+          if(dev){ arr = arr.map(x=> x.id===obj.id? obj:x) } else { arr.push(obj) }
+          save(KEYS.DEV, arr)
+          save(KEYS.COUNTERS, counters)
+          pushRecent(dev? 'تعديل جهاز: '+obj.name : 'إضافة جهاز: '+obj.name)
+          closeModal()
+          renderAll()
+        }catch(err){ console.error(err); alert('حدث خطأ أثناء الحفظ') }
+      })
+    }
+
+    function deleteDevice(id){ if(!confirm('حذف الجهاز نهائيًا؟')) return; let arr=load(KEYS.DEV); arr = arr.filter(x=>x.id!==id); save(KEYS.DEV, arr); pushRecent('حذف جهاز'); renderAll() }
+
+    // ======= المستخدمون ======
+    function renderUsers(){ const arr=load(KEYS.USERS); const tbody=$('#usersTbody'); tbody.innerHTML=''; arr.forEach((u,i)=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td class='px-3 py-2'>${i+1}</td><td class='px-3 py-2'>${u.name}</td><td class='px-3 py-2'>${u.speciality||''}</td><td class='px-3 py-2'>${(u.certs||[]).map(c=>c.name+' ('+c.date+')').join('<br>')}</td><td class='px-3 py-2'><button data-id='${u.id}' class='editUser px-2 py-1 rounded border'>تعديل</button><button data-id='${u.id}' class='delUser px-2 py-1 rounded border ml-2'>حذف</button></td>`; tbody.appendChild(tr) })
+      $$('.editUser').forEach(b=>b.addEventListener('click', e=>openUserModal(e.target.dataset.id)))
+      $$('.delUser').forEach(b=>b.addEventListener('click', e=>{ if(!confirm('حذف المستخدم؟'))return; let arr=load(KEYS.USERS); arr=arr.filter(x=>x.id!==e.target.dataset.id); save(KEYS.USERS,arr); pushRecent('حذف مستخدم'); renderAll() })) }
+
+    function openUserModal(id){ const user = load(KEYS.USERS).find(x=>x.id==id)||null; const html = renderUserForm(user); openModal(html); attachUserHandlers(user) }
+
+    function renderUserForm(user){ const isNew=!user; const u=user||{name:'',speciality:'',certs:[]}; return `
+      <h3 class='text-lg font-bold mb-2'>${isNew? 'إضافة مستخدم':'تعديل مستخدم'}</h3>
+      <label>الاسم<input id='u_name' value='${escapeHtml(u.name)}' class='w-full rounded border px-2 py-1' /></label>
+      <label>الاختصاص<input id='u_spec' value='${escapeHtml(u.speciality||'')}' class='w-full rounded border px-2 py-1' /></label>
+      <div class='mt-2'>الشهادات (اضف واحدة تلو الأخرى)</div>
+      <div class='flex gap-2 mt-2'>
+        <input id='cert_name' placeholder='اسم الشهادة' class='rounded border px-2 py-1 w-2/3' />
+        <input id='cert_date' type='date' class='rounded border px-2 py-1 w-1/3' />
+      </div>
+      <div class='mt-2 flex justify-end gap-2'>
+        <button id='cancelUser' class='px-3 py-1 rounded border'>إلغاء</button>
+        <button id='addCert' class='px-3 py-1 rounded border'>أضف شهادة</button>
+        <button id='saveUser' class='px-3 py-1 rounded bg-primary-600 text-white'>حفظ</button>
+      </div>
+      <div id='certList' class='mt-3'>${(u.certs||[]).map(c=>`<div class='text-sm'>${escapeHtml(c.name)} — ${c.date}</div>`).join('')}</div>` }
+
+    function attachUserHandlers(user){ $('#cancelUser').addEventListener('click', closeModal); $('#addCert').addEventListener('click', ()=>{ const name=$('#cert_name').value.trim(); const date=$('#cert_date').value; if(!name||!date) return alert('ادخل اسم وتاريخ الشهادة'); const list = load(KEYS.USERS); const temp = user? (user.certs||[]) : []; temp.push({name,date}); $('#certList').innerHTML = temp.map(c=>`<div class='text-sm'>${escapeHtml(c.name)} — ${c.date}</div>`).join(''); user? user.certs=temp : user={...user,certs:temp}; $('#cert_name').value=''; $('#cert_date').value=''; }); $('#saveUser').addEventListener('click', ()=>{ const name=$('#u_name').value.trim(); if(!name) return alert('الاسم مطلوب'); const arr=load(KEYS.USERS); const counters=load(KEYS.COUNTERS); if(!user){ counters.user=(counters.user||0)+1; const id='USR-'+counters.user; const obj={id,name,speciality:$('#u_spec').value,certs:[]}; arr.push(obj); save(KEYS.USERS,arr); save(KEYS.COUNTERS,counters); pushRecent('إضافة مستخدم: '+name); } else { const obj={...user,name,speciality:$('#u_spec').value}; const newArr=arr.map(x=> x.id===user.id? obj:x); save(KEYS.USERS,newArr); pushRecent('تعديل مستخدم: '+name); } closeModal(); renderAll(); }) }
+
+    // ======= C12/C7 ======
+    function renderC12(){ const arr=load(KEYS.C12); const tbody=$('#c12Tbody'); tbody.innerHTML=''; arr.forEach((r,i)=>{ const d=load(KEYS.DEV).find(x=>x.id===r.deviceId)||{}; const tr=document.createElement('tr'); tr.innerHTML=`<td class='px-3 py-2'>${i+1}</td><td class='px-3 py-2'>${r.number}</td><td class='px-3 py-2'>${r.date}</td><td class='px-3 py-2'>${d.name||r.deviceName||''}</td><td class='px-3 py-2'>${r.recipient||''}</td><td class='px-3 py-2'>${r.entity||''}</td><td class='px-3 py-2'><button data-i='${i}' class='printC12 px-2 py-1 rounded border'>طباعة</button><button data-i='${i}' class='delC12 px-2 py-1 rounded border ml-2'>حذف</button></td>`; tbody.appendChild(tr) })
+      $$('.delC12').forEach(b=>b.addEventListener('click', e=>{ if(!confirm('حذف وثيقة؟')) return; let arr=load(KEYS.C12); arr.splice(e.target.dataset.i,1); save(KEYS.C12,arr); pushRecent('حذف C12'); renderAll(); }))
+      $$('.printC12').forEach(b=>b.addEventListener('click', e=>printC12(e.target.dataset.i))) }
+
+    function renderC7(){ const arr=load(KEYS.C7); const tbody=$('#c7Tbody'); tbody.innerHTML=''; arr.forEach((r,i)=>{ const d=load(KEYS.DEV).find(x=>x.id===r.deviceId)||{}; const tr=document.createElement('tr'); tr.innerHTML=`<td class='px-3 py-2'>${i+1}</td><td class='px-3 py-2'>${r.number}</td><td class='px-3 py-2'>${r.date}</td><td class='px-3 py-2'>${d.name||r.deviceName||''}</td><td class='px-3 py-2'>${r.issue||''}</td><td class='px-3 py-2'>${r.status||''}</td><td class='px-3 py-2'><button data-i='${i}' class='printC7 px-2 py-1 rounded border'>طباعة</button><button data-i='${i}' class='delC7 px-2 py-1 rounded border ml-2'>حذف</button></td>`; tbody.appendChild(tr) })
+      $$('.delC7').forEach(b=>b.addEventListener('click', e=>{ if(!confirm('حذف وثيقة صيانة؟')) return; let arr=load(KEYS.C7); arr.splice(e.target.dataset.i,1); save(KEYS.C7,arr); pushRecent('حذف C7'); renderAll() }))
+      $$('.printC7').forEach(b=>b.addEventListener('click', e=>printC7(e.target.dataset.i))) }
+
+    function printC12(i){ const arr=load(KEYS.C12); const r=arr[i]; const d = load(KEYS.DEV).find(x=>x.id===r.deviceId)||{}; const html = buildPrintHTML('C12', r, d); const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.print(); }
+    function printC7(i){ const arr=load(KEYS.C7); const r=arr[i]; const d = load(KEYS.DEV).find(x=>x.id===r.deviceId)||{}; const html = buildPrintHTML('C7', r, d); const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.print(); }
+    function buildPrintHTML(type, rec, device){ return `<!doctype html><html lang='ar' dir='rtl'><head><meta charset='utf-8'><title>${type} ${rec.number}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #444;padding:8px;text-align:right}</style></head><body><h2>نموذج ${type}</h2><table><tr><th>رقم الوثيقة</th><td>${rec.number}</td></tr><tr><th>التاريخ</th><td>${rec.date}</td></tr><tr><th>اسم الجهاز</th><td>${device.name||rec.deviceName||''}</td></tr>${type==='C7'?`<tr><th>العطل</th><td>${rec.issue||''}</td></tr><tr><th>الحالة</th><td>${rec.status||''}</td></tr>`:`<tr><th>المستلم</th><td>${rec.recipient||''}</td></tr><tr><th>الجهة</th><td>${rec.entity||''}</td></tr>`}</table><p style='margin-top:20px'>توقيع: ___________________</p></body></html>` }// ====== إنشاء وثائق جديدة ======
+$('#addDeviceBtn').addEventListener('click', ()=>{ openModal(renderDeviceForm(null)); attachDeviceFormHandlers(null) })
+$('#addUserBtn').addEventListener('click', ()=>{ openModal(renderUserForm(null)); attachUserHandlers(null) })
+
+$('#addC12Btn').addEventListener('click', ()=>{
+  const devs = load(KEYS.DEV)
+  if(devs.length===0) return alert('لا أجهزة مسجلة')
+  const counters = load(KEYS.COUNTERS); counters.c12=(counters.c12||0)+1; save(KEYS.COUNTERS,counters)
+  const id = 'C12-'+counters.c12
+  const date = new Date().toISOString().slice(0,10)
+  // اختر الجهاز بواسطة نافذة بسيطة
+  const sel = prompt('أدخل رقم الجهاز (ID) أو الرقم التسلسلي لتسجيل التسليم:')
+  if(!sel) return
+  const device = devs.find(d=>d.id===sel || d.sn===sel)
+  const deviceName = device? device.name : sel
+  const recipient = prompt('اسم المستلم أو الجهة:')||''
+  const entity = prompt('الجهة التي سلمت الجهاز:')||''
+  const rec = { number:id, date, deviceId: device? device.id : '', deviceName, recipient, entity }
+  const arr = load(KEYS.C12); arr.push(rec); save(KEYS.C12,arr); pushRecent('إنشاء C12 '+id); renderAll()
+})
+
+$('#addC7Btn').addEventListener('click', ()=>{
+  const devs = load(KEYS.DEV)
+  if(devs.length===0) return alert('لا أجهزة مسجلة')
+  const counters = load(KEYS.COUNTERS); counters.c7=(counters.c7||0)+1; save(KEYS.COUNTERS,counters)
+  const id = 'C7-'+counters.c7
+  const date = new Date().toISOString().slice(0,10)
+  const sel = prompt('أدخل رقم الجهاز (ID) أو الرقم التسلسلي لإرسال للصيانة:')
+  if(!sel) return
+  const device = devs.find(d=>d.id===sel || d.sn===sel)
+  const deviceName = device? device.name : sel
+  const issue = prompt('وصف العطل المحتمل:')||''
+  const rec = { number:id, date, deviceId: device? device.id : '', deviceName, issue, status:'قيد الإصلاح' }
+  const arr = load(KEYS.C7); arr.push(rec); save(KEYS.C7,arr); pushRecent('إنشاء C7 '+id); renderAll()
+})
+
+// ====== Export / Import شامل ======
+$('#exportAll').addEventListener('click', ()=>{
+  const wb = XLSX.utils.book_new()
+  const dev = load(KEYS.DEV)
+  const users = load(KEYS.USERS)
+  const c12 = load(KEYS.C12)
+  const c7 = load(KEYS.C7)
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dev),'Devices')
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(users),'Users')
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(c12),'C12')
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(c7),'C7')
+  XLSX.writeFile(wb, 'inventory_export.xlsx')
+})
+
+$('#importAll').addEventListener('change', (ev)=>{
+  const f = ev.target.files[0]
+  if(!f) return
+  const reader = new FileReader()
+  reader.onload = (e)=>{
+    const data = new Uint8Array(e.target.result)
+    const wb = XLSX.read(data,{type:'array'})
+    const names = wb.SheetNames
+    if(names.includes('Devices')) save(KEYS.DEV, XLSX.utils.sheet_to_json(wb.Sheets['Devices'], {defval:''}))
+    if(names.includes('Users')) save(KEYS.USERS, XLSX.utils.sheet_to_json(wb.Sheets['Users'], {defval:''}))
+    if(names.includes('C12')) save(KEYS.C12, XLSX.utils.sheet_to_json(wb.Sheets['C12'], {defval:''}))
+    if(names.includes('C7')) save(KEYS.C7, XLSX.utils.sheet_to_json(wb.Sheets['C7'], {defval:''}))
+    pushRecent('استيراد ملف Excel')
+    renderAll()
+    alert('تم الاستيراد بنجاح. تحقق من البيانات.')
+  }
+  reader.readAsArrayBuffer(f)
+})
+
+// ======= تهيئة قاعدة جديدة ======
+$('#resetData').addEventListener('click', ()=>{ if(!confirm('سيؤدي ذلك لتهيئة قاعدة جديدة (سيبقى النسخ السابق إن أردت حفظه). متابعة؟')) return; localStorage.clear(); initDB(); renderAll(); pushRecent('تهيئة قاعدة جديدة') })
+
+// ======= نماذج المودال ======
+function openModal(html){ $('#modals').classList.remove('hidden'); $('#modalContent').innerHTML = html }
+function closeModal(){ $('#modals').classList.add('hidden'); $('#modalContent').innerHTML = '' }
+
+// ======= مساعدة طباعة/escape ======
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+// ====== بحث عام ======
+$('#globalSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase(); if(!q){ renderAll(); return }
+  // بحث مبسط: الجهاز باسم أو SN أو مستخدم
+  const devs = load(KEYS.DEV).filter(d=> (d.name||'').toLowerCase().includes(q) || (d.sn||'').toLowerCase().includes(q) || (d.userName||'').toLowerCase().includes(q))
+  // عرض النتائج فقط في جدول الأجهزة
+  const tbody = $('#devicesTbody'); tbody.innerHTML=''
+  devs.forEach((d,i)=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td class='px-3 py-2'>${i+1}</td><td class='px-3 py-2'>${d.name}</td><td class='px-3 py-2'>${d.userName||''}</td><td class='px-3 py-2'>${d.sn}</td><td class='px-3 py-2'>${d.network.connected?d.network.ip:'معزول'}</td><td class='px-3 py-2'>${d.osName||''}</td><td class='px-3 py-2'>${d.avStatus||''}</td><td class='px-3 py-2'></td>`; tbody.appendChild(tr) })
+})
+
+// ====== البدء ======
+window.addEventListener('DOMContentLoaded', ()=>{ initDB(); renderAll(); })
+
+  </script>
+</body>
+</html>
